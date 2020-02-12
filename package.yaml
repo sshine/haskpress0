@@ -17,6 +17,7 @@ dependencies:
   - friendly-time
   - containers
   - Spock
+  - cmark-gfm
 
 default-extensions:
   - NoImplicitPrelude

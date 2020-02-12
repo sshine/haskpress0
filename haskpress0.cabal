@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b1686cef5b725cc3b3eaac284b3ea00993eba97160d3db64c911d7f515913409
+-- hash: d41174483295469b3e91b33778db858e25dc2b88f01570ab550bd75cb785b46e
 
 name:           haskpress0
 version:        0.1.0
@@ -27,6 +27,7 @@ executable haskpress0
   build-depends:
       Spock
     , base
+    , cmark-gfm
     , containers
     , directory
     , friendly-time
@@ -46,6 +47,7 @@ test-suite test
   build-depends:
       Spock
     , base
+    , cmark-gfm
     , containers
     , directory
     , friendly-time

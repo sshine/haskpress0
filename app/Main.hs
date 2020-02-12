@@ -8,6 +8,8 @@ import qualified RIO.Text as Text
 import           RIO.Text (Text)
 import           RIO.Time (UTCTime)
 
+import CMarkGFM (commonmarkToHtml)
+
 import Web.Spock
 import Web.Spock.Config
 
@@ -15,9 +17,10 @@ import System.Directory (listDirectory)
 
 type BlogTitle = Text
 data BlogPost = BlogPost
-  { blogPostDate    :: Maybe UTCTime
-  , blogPostTitle   :: BlogTitle
-  , blogPostContent :: Text
+  { blogPostDate            :: Maybe UTCTime
+  , blogPostTitle           :: BlogTitle
+  , blogPostContent         :: Text
+  , blogPostContentRendered :: Text
   }
   deriving (Eq, Ord, Show)
 
@@ -50,20 +53,21 @@ app = do
     AppState posts <- getState
     case Map.lookup name posts of
       Nothing -> text "Post not found!"
-      Just post -> text (tshow post)
+      Just post -> html (blogPostContentRendered post)
 
 tshowBlogPosts :: [BlogPost] -> Text
 tshowBlogPosts = foldMap tshowBlogPost
   where
     tshowBlogPost :: BlogPost -> Text
-    tshowBlogPost (BlogPost d t c) =
+    tshowBlogPost (BlogPost d t c r) =
       "<li><a href=\"/" <> t <> "\">" <> t <> "</a></li>"
 
 readBlogPost :: MonadIO m => FilePath -> m BlogPost
 readBlogPost filePath = do
-  content <- readFileUtf8 filePath
-  let title = Text.pack filePath
-  pure (BlogPost Nothing title content)
+  c <- readFileUtf8 filePath
+  let t = Text.pack filePath
+  let r = commonmarkToHtml [] [] c
+  pure (BlogPost Nothing t c r)
 
 readBlogPosts :: MonadIO m => m (Map BlogTitle BlogPost)
 readBlogPosts = do
