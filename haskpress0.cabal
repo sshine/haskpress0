@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d41174483295469b3e91b33778db858e25dc2b88f01570ab550bd75cb785b46e
+-- hash: bd6c169db293c8d721a61b555159a37ef663dfcaee0951e9ec4267f7ef0c64fb
 
 name:           haskpress0
 version:        0.1.0
@@ -31,6 +31,7 @@ executable haskpress0
     , containers
     , directory
     , friendly-time
+    , fsnotify
     , rio
     , text
     , time
@@ -51,6 +52,7 @@ test-suite test
     , containers
     , directory
     , friendly-time
+    , fsnotify
     , haskpress0
     , hspec
     , rio

@@ -18,6 +18,7 @@ dependencies:
   - containers
   - Spock
   - cmark-gfm
+  - fsnotify
 
 default-extensions:
   - NoImplicitPrelude

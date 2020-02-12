@@ -8,12 +8,17 @@ import qualified RIO.Text as Text
 import           RIO.Text (Text)
 import           RIO.Time (UTCTime)
 
+import Data.Text.IO (putStrLn)
+
 import CMarkGFM (commonmarkToHtml)
 
 import Web.Spock
 import Web.Spock.Config
 
 import System.Directory (listDirectory)
+import System.FSNotify
+import Control.Monad (forever)
+import Control.Concurrent (forkIO)
 
 type BlogTitle = Text
 data BlogPost = BlogPost
@@ -26,7 +31,7 @@ data BlogPost = BlogPost
 
 data AppSession = EmptySession
 data AppState = AppState
-  { appStatePosts :: Map Text BlogPost
+  { appStatePosts :: IORef (Map BlogTitle BlogPost)
   }
 
 postsDir :: FilePath
@@ -35,13 +40,16 @@ postsDir = "posts"
 main :: IO ()
 main = do
   posts <- readBlogPosts
-  spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (AppState posts)
+  postsRef <- newIORef posts
+  _monitorTid <- forkIO (void $ blogPostsMonitor postsRef)
+  spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (AppState postsRef)
   runSpock 3000 (spock spockCfg app)
 
 app :: SpockM () AppSession AppState ()
 app = do
   get root $ do
-    AppState posts <- getState
+    AppState postsRef <- getState
+    posts <- liftIO (readIORef postsRef)
     html $ mconcat
       [ "<h1>Blog posts</h1>"
       , "<ul>"
@@ -50,7 +58,8 @@ app = do
       ]
 
   get ("posts" <//> var) $ \name -> do
-    AppState posts <- getState
+    AppState postsRef <- getState
+    posts <- liftIO (readIORef postsRef)
     case Map.lookup name posts of
       Nothing -> text "Post not found!"
       Just post -> html (blogPostContentRendered post)
@@ -75,3 +84,15 @@ readBlogPosts = do
   posts <- traverse (readBlogPost . (postsDir </>)) filePaths
   let fakeTitles = map Text.pack filePaths
   return (Map.fromList (zip fakeTitles posts))
+
+blogPostsMonitor :: IORef (Map BlogTitle BlogPost) -> IO StopListening
+blogPostsMonitor postsRef =
+  withManager $ \mgr -> do
+    watchDir mgr postsDir (const True) updatePosts
+    forever $ threadDelay 1000000
+  where
+    updatePosts :: Event -> IO ()
+    updatePosts _event = do
+      posts <- readBlogPosts
+      liftIO (atomicWriteIORef postsRef posts)
+      putStrLn "Reloaded posts..."
