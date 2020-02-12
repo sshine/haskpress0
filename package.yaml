@@ -1,0 +1,48 @@
+name: haskpress0
+version: 0.1.0
+
+homepage: https://github.com/sshine/haskpress0
+author: Simon Shine
+maintainer: shreddedglory@gmail.com
+copyright: 2020 Simon Shine
+extra-source-files:
+  - README.md
+
+dependencies:
+  - base
+  - rio
+  - text
+  - time
+  - directory
+  - friendly-time
+  - containers
+  - Spock
+
+default-extensions:
+  - NoImplicitPrelude
+  - OverloadedStrings
+
+executables:
+  haskpress0:
+    source-dirs: app
+    main: Main.hs
+    ghc-options:
+      - -O2
+      - -Wall
+      - -Wcompat
+      - -Widentities
+      - -Wincomplete-record-updates
+      - -Wincomplete-uni-patterns
+      - -Wpartial-fields
+      - -Wredundant-constraints
+
+tests:
+  test:
+    main: test.hs
+    source-dirs: test
+    dependencies:
+      - haskpress0
+      - tasty
+      - tasty-discover
+      - tasty-hspec
+      - hspec
