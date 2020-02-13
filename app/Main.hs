@@ -1,7 +1,7 @@
 module Main where
 
 import           RIO
-import           RIO.FilePath ((</>))
+import           RIO.FilePath ((</>), isExtensionOf)
 import qualified RIO.Map as Map
 import           RIO.Map (Map)
 import qualified RIO.Text as Text
@@ -81,7 +81,8 @@ readBlogPost filePath = do
 readBlogPosts :: MonadIO m => m (Map BlogTitle BlogPost)
 readBlogPosts = do
   filePaths <- liftIO (listDirectory postsDir)
-  posts <- traverse (readBlogPost . (postsDir </>)) filePaths
+  let markdownFilePaths = filter (".md" `isExtensionOf`) filePaths
+  posts <- traverse (readBlogPost . (postsDir </>)) markdownFilePaths
   let fakeTitles = map Text.pack filePaths
   return (Map.fromList (zip fakeTitles posts))
 
