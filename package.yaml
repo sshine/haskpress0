@@ -23,6 +23,8 @@ dependencies:
 default-extensions:
   - NoImplicitPrelude
   - OverloadedStrings
+  - FlexibleContexts
+  - GADTs
 
 executables:
   haskpress0:

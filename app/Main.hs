@@ -47,22 +47,34 @@ main = do
 
 app :: SpockM () AppSession AppState ()
 app = do
-  get root $ do
-    AppState postsRef <- getState
-    posts <- liftIO (readIORef postsRef)
-    html $ mconcat
-      [ "<h1>Blog posts</h1>"
-      , "<ul>"
-      , tshowBlogPosts (Map.elems posts)
-      , "</ul>"
-      ]
+  get root postsOverview
+  get ("posts" <//> var) postView
 
-  get ("posts" <//> var) $ \name -> do
-    AppState postsRef <- getState
-    posts <- liftIO (readIORef postsRef)
-    case Map.lookup name posts of
-      Nothing -> text "Post not found!"
-      Just post -> html (blogPostContentRendered post)
+postView :: Text -> ActionCtxT () (WebStateM () AppSession AppState) b
+postView name = do
+  blogPost <- lookupBlogPost name
+  case blogPost of
+    Nothing -> text "Post not found!"
+    Just content -> html (blogPostContentRendered content)
+
+postsOverview :: ActionCtxT () (WebStateM () AppSession AppState) b
+postsOverview = do
+  posts <- getBlogPosts
+  html $ mconcat
+    [ "<h1>Blog posts</h1>"
+    , "<ul>"
+    , tshowBlogPosts (Map.elems posts)
+    , "</ul>"
+    ]
+
+getBlogPosts :: ActionCtxT () (WebStateM () AppSession AppState) (Map BlogTitle BlogPost)
+getBlogPosts = do
+  AppState postsRef <- getState
+  posts <- liftIO (readIORef postsRef)
+  pure posts
+
+lookupBlogPost :: BlogTitle -> ActionCtxT () (WebStateM () AppSession AppState) (Maybe BlogPost)
+lookupBlogPost name = Map.lookup name <$> getBlogPosts
 
 tshowBlogPosts :: [BlogPost] -> Text
 tshowBlogPosts = foldMap tshowBlogPost

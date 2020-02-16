@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: bd6c169db293c8d721a61b555159a37ef663dfcaee0951e9ec4267f7ef0c64fb
+-- hash: 51557d4295f746ff622c5abc4a00656edf89a9246522840391bc50d8aede94fe
 
 name:           haskpress0
 version:        0.1.0
@@ -22,7 +22,7 @@ executable haskpress0
       Paths_haskpress0
   hs-source-dirs:
       app
-  default-extensions: NoImplicitPrelude OverloadedStrings
+  default-extensions: NoImplicitPrelude OverloadedStrings FlexibleContexts GADTs
   ghc-options: -O2 -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
       Spock
@@ -44,7 +44,7 @@ test-suite test
       Paths_haskpress0
   hs-source-dirs:
       test
-  default-extensions: NoImplicitPrelude OverloadedStrings
+  default-extensions: NoImplicitPrelude OverloadedStrings FlexibleContexts GADTs
   build-depends:
       Spock
     , base
