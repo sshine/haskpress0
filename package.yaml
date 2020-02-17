@@ -23,13 +23,22 @@ dependencies:
 default-extensions:
   - NoImplicitPrelude
   - OverloadedStrings
+  - RecordWildCards
+  - TupleSections
+  - ViewPatterns
   - FlexibleContexts
   - GADTs
+
+library:
+  exposed-modules:
+    - Web.HaskPress.BlogPost
+  source-dirs: src
 
 executables:
   haskpress0:
     source-dirs: app
     main: Main.hs
+    dependencies: haskpress0
     ghc-options:
       - -O2
       - -Wall

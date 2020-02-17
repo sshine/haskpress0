@@ -20,19 +20,14 @@ import System.FSNotify
 import Control.Monad (forever)
 import Control.Concurrent (forkIO)
 
-type BlogTitle = Text
-data BlogPost = BlogPost
-  { blogPostDate            :: Maybe UTCTime
-  , blogPostTitle           :: BlogTitle
-  , blogPostContent         :: Text
-  , blogPostContentRendered :: Text
-  }
-  deriving (Eq, Ord, Show)
+import Web.HaskPress.BlogPost
 
 data AppSession = EmptySession
 data AppState = AppState
-  { appStatePosts :: IORef (Map BlogTitle BlogPost)
+  { appStatePosts :: IORef (Map FilePath BlogPost)
   }
+
+type HaskPressM a = ActionT (WebStateM () AppSession AppState) a
 
 postsDir :: FilePath
 postsDir = "posts"
@@ -41,7 +36,7 @@ main :: IO ()
 main = do
   posts <- readBlogPosts
   postsRef <- newIORef posts
-  _monitorTid <- forkIO (void $ blogPostsMonitor postsRef)
+  _monitorTid <- forkIO . void . blogPostsMonitor $ postsRef
   spockCfg <- defaultSpockCfg EmptySession PCNoDatabase (AppState postsRef)
   runSpock 3000 (spock spockCfg app)
 
@@ -50,55 +45,60 @@ app = do
   get root postsOverview
   get ("posts" <//> var) postView
 
-postView :: Text -> ActionCtxT () (WebStateM () AppSession AppState) b
-postView name = do
-  blogPost <- lookupBlogPost name
+postView :: Text -> HaskPressM a
+postView (Text.unpack -> name) = do
+  blogPost <- lookupBlogPost (postsDir </> name)
   case blogPost of
-    Nothing -> text "Post not found!"
+    Nothing -> text $ "Post not found!"
     Just content -> html (blogPostContentRendered content)
 
-postsOverview :: ActionCtxT () (WebStateM () AppSession AppState) b
+postsOverview :: HaskPressM a
 postsOverview = do
   posts <- getBlogPosts
   html $ mconcat
     [ "<h1>Blog posts</h1>"
-    , "<ul>"
-    , tshowBlogPosts (Map.elems posts)
-    , "</ul>"
+    , htmlBlogPosts posts
     ]
 
-getBlogPosts :: ActionCtxT () (WebStateM () AppSession AppState) (Map BlogTitle BlogPost)
+htmlBlogPosts :: Map FilePath BlogPost -> Text
+htmlBlogPosts =
+  ("<ul>" <>) . (<> "</ul>") . foldMap f . Map.toList
+  where
+    f :: (FilePath, BlogPost) -> Text
+    f (filePath, blogPost @ BlogPost{..}) = mconcat
+      [ "<li><a href=\"/", Text.pack filePath, "\">"
+      , blogPostTitle
+      , "</a> "
+      , showBlogPostDate blogPostDate
+      , "</li>"
+      ]
+
+getBlogPosts :: HaskPressM (Map FilePath BlogPost)
 getBlogPosts = do
   AppState postsRef <- getState
-  posts <- liftIO (readIORef postsRef)
-  pure posts
+  liftIO (readIORef postsRef)
 
-lookupBlogPost :: BlogTitle -> ActionCtxT () (WebStateM () AppSession AppState) (Maybe BlogPost)
+lookupBlogPost :: FilePath -> HaskPressM (Maybe BlogPost)
 lookupBlogPost name = Map.lookup name <$> getBlogPosts
-
-tshowBlogPosts :: [BlogPost] -> Text
-tshowBlogPosts = foldMap tshowBlogPost
-  where
-    tshowBlogPost :: BlogPost -> Text
-    tshowBlogPost (BlogPost d t c r) =
-      "<li><a href=\"/" <> t <> "\">" <> t <> "</a></li>"
 
 readBlogPost :: MonadIO m => FilePath -> m BlogPost
 readBlogPost filePath = do
-  c <- readFileUtf8 filePath
-  let t = Text.pack filePath
-  let r = commonmarkToHtml [] [] c
-  pure (BlogPost Nothing t c r)
+  blogPostContent <- readFileUtf8 filePath
+  let blogPostDate = readDateFromFilePath filePath
+      blogPostTitle = readTitleFromContent blogPostContent
+      blogPostContentRendered = commonmarkToHtml [] [] blogPostContent
+  pure BlogPost{..}
 
-readBlogPosts :: MonadIO m => m (Map BlogTitle BlogPost)
+readBlogPosts :: MonadIO m => m (Map FilePath BlogPost)
 readBlogPosts = do
-  filePaths <- liftIO (listDirectory postsDir)
+  filePaths <- liftIO (listDirectory' postsDir)
   let markdownFilePaths = filter (".md" `isExtensionOf`) filePaths
-  posts <- traverse (readBlogPost . (postsDir </>)) markdownFilePaths
-  let fakeTitles = map Text.pack filePaths
-  return (Map.fromList (zip fakeTitles posts))
+  Map.fromList <$> traverse readBlogPost' markdownFilePaths
+  where
+    readBlogPost' :: MonadIO m => FilePath -> m (FilePath, BlogPost)
+    readBlogPost' filePath = (filePath,) <$> readBlogPost filePath
 
-blogPostsMonitor :: IORef (Map BlogTitle BlogPost) -> IO StopListening
+blogPostsMonitor :: IORef (Map FilePath BlogPost) -> IO StopListening
 blogPostsMonitor postsRef =
   withManager $ \mgr -> do
     watchDir mgr postsDir (const True) updatePosts
@@ -109,3 +109,8 @@ blogPostsMonitor postsRef =
       posts <- readBlogPosts
       liftIO (atomicWriteIORef postsRef posts)
       putStrLn "Reloaded posts..."
+
+listDirectory' :: FilePath -> IO [FilePath]
+listDirectory' dirPath = do
+  files' <- listDirectory dirPath
+  pure (map (dirPath </>) files')

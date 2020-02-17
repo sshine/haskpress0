@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 51557d4295f746ff622c5abc4a00656edf89a9246522840391bc50d8aede94fe
+-- hash: ce7c9901da9f376010e62361b7681ff7bad75dc0354d0a9f146d94940fdc95dd
 
 name:           haskpress0
 version:        0.1.0
@@ -16,14 +16,14 @@ build-type:     Simple
 extra-source-files:
     README.md
 
-executable haskpress0
-  main-is: Main.hs
+library
+  exposed-modules:
+      Web.HaskPress.BlogPost
   other-modules:
       Paths_haskpress0
   hs-source-dirs:
-      app
-  default-extensions: NoImplicitPrelude OverloadedStrings FlexibleContexts GADTs
-  ghc-options: -O2 -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+      src
+  default-extensions: NoImplicitPrelude OverloadedStrings RecordWildCards TupleSections ViewPatterns FlexibleContexts GADTs
   build-depends:
       Spock
     , base
@@ -37,6 +37,28 @@ executable haskpress0
     , time
   default-language: Haskell2010
 
+executable haskpress0
+  main-is: Main.hs
+  other-modules:
+      Paths_haskpress0
+  hs-source-dirs:
+      app
+  default-extensions: NoImplicitPrelude OverloadedStrings RecordWildCards TupleSections ViewPatterns FlexibleContexts GADTs
+  ghc-options: -O2 -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      Spock
+    , base
+    , cmark-gfm
+    , containers
+    , directory
+    , friendly-time
+    , fsnotify
+    , haskpress0
+    , rio
+    , text
+    , time
+  default-language: Haskell2010
+
 test-suite test
   type: exitcode-stdio-1.0
   main-is: test.hs
@@ -44,7 +66,7 @@ test-suite test
       Paths_haskpress0
   hs-source-dirs:
       test
-  default-extensions: NoImplicitPrelude OverloadedStrings FlexibleContexts GADTs
+  default-extensions: NoImplicitPrelude OverloadedStrings RecordWildCards TupleSections ViewPatterns FlexibleContexts GADTs
   build-depends:
       Spock
     , base
