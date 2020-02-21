@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ce7c9901da9f376010e62361b7681ff7bad75dc0354d0a9f146d94940fdc95dd
+-- hash: 1a58c43241eeed5682246bbc8dd1f6c9b950ae2ee81f90ebff49c81736b71299
 
 name:           haskpress0
 version:        0.1.0
@@ -27,11 +27,14 @@ library
   build-depends:
       Spock
     , base
+    , blaze-html
+    , blaze-markup
     , cmark-gfm
     , containers
     , directory
     , friendly-time
     , fsnotify
+    , heterocephalus
     , rio
     , text
     , time
@@ -48,12 +51,15 @@ executable haskpress0
   build-depends:
       Spock
     , base
+    , blaze-html
+    , blaze-markup
     , cmark-gfm
     , containers
     , directory
     , friendly-time
     , fsnotify
     , haskpress0
+    , heterocephalus
     , rio
     , text
     , time
@@ -70,12 +76,15 @@ test-suite test
   build-depends:
       Spock
     , base
+    , blaze-html
+    , blaze-markup
     , cmark-gfm
     , containers
     , directory
     , friendly-time
     , fsnotify
     , haskpress0
+    , heterocephalus
     , hspec
     , rio
     , tasty

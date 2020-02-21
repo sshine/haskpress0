@@ -19,6 +19,9 @@ dependencies:
   - Spock
   - cmark-gfm
   - fsnotify
+  - blaze-html
+  - blaze-markup
+  - heterocephalus
 
 default-extensions:
   - NoImplicitPrelude
